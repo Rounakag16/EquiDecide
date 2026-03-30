@@ -207,8 +207,8 @@ def calculate_historical_approval_rate(location_tier: str) -> float:
     Update them if you regenerate the dataset.
     """
     rates = {
-        'Rural'      : 0.12,   # ~38–44% admitted but heavily income-filtered
-        'Semi-Urban' : 0.34,
-        'Urban'      : 0.68,
+        'Rural'      : 0.26,   # actual from CSV
+        'Semi-Urban' : 0.44,   # actual from CSV
+        'Urban'      : 0.44,   # actual from CSV
     }
-    return rates.get(location_tier, 0.50)
+    return rates.get(location_tier, 0.44)

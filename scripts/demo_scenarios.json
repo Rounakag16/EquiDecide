@@ -1,0 +1,44 @@
+{
+  "scenario_1_resilient_rural": {
+    "name": "Ravi Kumar",
+    "demographics": { "age": 19, "gender": "Male" },
+    "standard_metrics": {
+      "academic_score_percentage": 70.0,
+      "family_income_monthly_inr": 1500
+    },
+    "contextual_signals": {
+      "location_tier": "Rural",
+      "first_generation_student": true,
+      "distance_from_institution_km": 65,
+      "internet_access_reliability": "Low"
+    }
+  },
+  "scenario_2_no_correction": {
+    "name": "Priya Sharma",
+    "demographics": { "age": 20, "gender": "Female" },
+    "standard_metrics": {
+      "academic_score_percentage": 85.0,
+      "family_income_monthly_inr": 18000
+    },
+    "contextual_signals": {
+      "location_tier": "Urban",
+      "first_generation_student": false,
+      "distance_from_institution_km": 4,
+      "internet_access_reliability": "High"
+    }
+  },
+  "scenario_3_hidden_topper": {
+    "name": "Anjali Devi",
+    "demographics": { "age": 18, "gender": "Female" },
+    "standard_metrics": {
+      "academic_score_percentage": 64.0,
+      "family_income_monthly_inr": 2200
+    },
+    "contextual_signals": {
+      "location_tier": "Rural",
+      "first_generation_student": true,
+      "distance_from_institution_km": 80,
+      "internet_access_reliability": "Low"
+    }
+  }
+}

@@ -8,10 +8,15 @@ import { ComparisonUI } from './components/ComparisonUI';
 import { MetricsDashboard } from './components/MetricsDashboard';
 import { Doodles } from './components/Doodles';
 import { IntroAnimation } from './components/IntroAnimation';
+import { DynamicEvalPage } from './components/DynamicEvalPage';
+import { DemoPage } from './components/DemoPage';
+import { FeedbackWidget } from './components/FeedbackWidget';
+import { ClickRipple } from './components/ClickRipple';
 
 type UiOutcome = "APPROVED" | "REJECTED";
 
 type ApiResponse = {
+  applicant_id: string;
   name: string;
   traditional_model: {
     outcome: "ADMITTED" | "REJECTED";
@@ -39,6 +44,7 @@ const toUiOutcome = (value: "ADMITTED" | "REJECTED"): UiOutcome =>
 function EvaluationFlow() {
   const [hasEvaluated, setHasEvaluated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [applicantId, setApplicantId] = useState('');
   const [applicantName, setApplicantName] = useState('Applicant');
   const [traditionalData, setTraditionalData] = useState<{
     outcome: UiOutcome;
@@ -101,6 +107,7 @@ function EvaluationFlow() {
       }
 
       const data: ApiResponse = await res.json();
+      setApplicantId(data.applicant_id);
       setApplicantName(data.name || 'Applicant');
       setTraditionalData({
         outcome: toUiOutcome(data.traditional_model.outcome),
@@ -173,6 +180,12 @@ function EvaluationFlow() {
         <div className={`mt-8 transition-all duration-1000 delay-300 ease-bouncy pb-12 ${!isLoading && hasEvaluated && metrics ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-24 scale-90 h-0 overflow-hidden'}`}>
           {metrics && <MetricsDashboard score={metrics.equityIndex} historicalRate={metrics.historicalRate} />}
         </div>
+
+        {!isLoading && hasEvaluated && applicantId && (
+          <div className="mt-8 pb-12">
+            <FeedbackWidget applicantId={applicantId} />
+          </div>
+        )}
       </main>
 
       <Footer />
@@ -187,6 +200,7 @@ function App() {
     <>
       {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
       <Doodles />
+      <ClickRipple />
       <Routes>
         <Route path="/" element={
           <div className="bg-transparent flex flex-col min-h-screen text-[#0f172a] font-sans">
@@ -198,6 +212,8 @@ function App() {
           </div>
         } />
         <Route path="/form" element={<EvaluationFlow />} />
+        <Route path="/dynamic" element={<DynamicEvalPage />} />
+        <Route path="/demo" element={<DemoPage />} />
       </Routes>
     </>
   );

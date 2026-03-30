@@ -1,171 +1,99 @@
-"""
-EquiDecide – Flask API
------------------------
-Single endpoint: POST /api/evaluate
-
-Loads model.pkl once at startup.
-Wires the logistic regression baseline with the ODS engine.
-Returns the exact response schema agreed with the frontend.
-
-Run from equidecide/ root:
-    python backend/app.py
-"""
-
-import sys
+import json
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 import pickle
-import pandas as pd
-from flask import Flask, request, jsonify
+import sys
+
+from flask import Flask, jsonify
 from flask_cors import CORS
 
-from ods_engine import (
-    calculate_ods,
-    adjust_threshold,
-    build_explanation,
-    calculate_equity_index,
-    calculate_historical_approval_rate,
-    BASE_THRESHOLD
-)
+from blueprints.dynamic_eval import dynamic_eval_bp
+from blueprints.static_eval import static_eval_bp
+from blueprints.context_infer import context_infer_bp
+from blueprints.feedback import feedback_bp
+from blueprints.analytics import analytics_bp
+from core.llm_explainer import get_provider_status
+from ods_engine import BASE_THRESHOLD
 
-# ── App setup ──────────────────────────────────────────────────────────────────
-app = Flask(__name__)
-CORS(app)  # Allow React dev server on port 5173
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# ── Load model once at startup ─────────────────────────────────────────────────
-MODEL_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    'model', 'model.pkl'
-)
-
+# Optional: load backend/.env if python-dotenv is installed.
 try:
-    model = pickle.load(open(MODEL_PATH, 'rb'))
-    print("Model loaded successfully")
-except FileNotFoundError:
-    print("model.pkl not found - run scripts/train_model.py first")
-    sys.exit(1)
+    from dotenv import load_dotenv  # type: ignore
+
+    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+except Exception:
+    pass
 
 
-# ── Health check ───────────────────────────────────────────────────────────────
-@app.route('/api/health', methods=['GET'])
-def health():
-    return jsonify({
-        "status"         : "ok",
-        "model_loaded"   : True,
-        "base_threshold" : BASE_THRESHOLD
-    })
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model", "model.pkl")
+KB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge", "policy_kb.json")
 
 
-# ── Main evaluation endpoint ───────────────────────────────────────────────────
-@app.route('/api/evaluate', methods=['POST'])
-def evaluate():
+def create_app() -> Flask:
+    app = Flask(__name__)
+    CORS(app)
 
-    # ── 1. Parse and validate request ─────────────────────────────────────────
-    data = request.get_json()
+    try:
+        with open(MODEL_PATH, "rb") as model_file:
+            model = pickle.load(model_file)
+    except FileNotFoundError:
+        print("model.pkl not found - expected at backend/model/model.pkl")
+        sys.exit(1)
 
-    if not data:
-        return jsonify({"error": "No JSON body received"}), 400
+    kb_loaded = False
+    kb = {}
+    if os.path.exists(KB_PATH):
+        with open(KB_PATH, "r", encoding="utf-8") as kb_file:
+            kb = json.load(kb_file)
+            kb_loaded = True
 
-    # Extract fields
-    applicant_id = data.get('applicant_id', 'unknown')
-    name         = data.get('name', 'Applicant')
+    app.config["MODEL"] = model
+    app.config["POLICY_KB"] = kb
+    app.config["POLICY_KB_LOADED"] = kb_loaded
 
-    standard  = data.get('standard_metrics', {})
-    signals   = data.get('contextual_signals', {})
+    app.register_blueprint(static_eval_bp)
+    app.register_blueprint(dynamic_eval_bp)
+    app.register_blueprint(context_infer_bp)
+    app.register_blueprint(feedback_bp)
+    app.register_blueprint(analytics_bp)
 
-    academic_score = standard.get('academic_score_percentage')
-    monthly_income = standard.get('family_income_monthly_inr')
+    @app.route("/api/health", methods=["GET"])
+    def health():
+        return jsonify(
+            {
+                "status": "ok",
+                "model_loaded": True,
+                "base_threshold": BASE_THRESHOLD,
+                "paths": {
+                    "static_eval": True,
+                    "dynamic_eval_beta": True,
+                    "context_extractor_inference": True,
+                    "context_infer_endpoint": True,
+                },
+                "policy_kb_loaded": app.config.get("POLICY_KB_LOADED", False),
+                "dynamic_explainer": get_provider_status(),
+            }
+        )
 
-    # Validate required fields
-    if academic_score is None or monthly_income is None:
-        return jsonify({
-            "error": "Missing required fields: academic_score_percentage, family_income_monthly_inr"
-        }), 400
+    @app.errorhandler(404)
+    def not_found(_err):
+        return jsonify({"error": "Endpoint not found"}), 404
 
-    if not signals.get('location_tier'):
-        return jsonify({
-            "error": "Missing required field: location_tier"
-        }), 400
+    @app.errorhandler(500)
+    def server_error(_err):
+        return jsonify({"error": "Internal server error"}), 500
 
-    # ── 2. Path A — Traditional model ─────────────────────────────────────────
-    features  = pd.DataFrame({
-        'academic_score_percentage' : [float(academic_score)],
-        'family_income_monthly_inr' : [float(monthly_income)]
-    })
-
-    prob      = float(model.predict_proba(features)[0][1])
-    outcome_a = prob >= BASE_THRESHOLD
-
-    traditional_reason = (
-        "Academic score and income meet the required threshold."
-        if outcome_a else
-        "Academic score and income fall below the required threshold."
-    )
-
-    # ── 3. Path B — EquiDecide engine ─────────────────────────────────────────
-    ods, reasons  = calculate_ods(signals)
-    adj_threshold = adjust_threshold(ods)
-    outcome_b     = prob >= adj_threshold
-
-    explanation = build_explanation(
-        reasons,
-        BASE_THRESHOLD,
-        adj_threshold,
-        ods,
-        name
-    )
-
-    # ── 4. Metrics ────────────────────────────────────────────────────────────
-    equity     = calculate_equity_index(ods, outcome_a, outcome_b)
-    hist_rate  = calculate_historical_approval_rate(
-                     signals.get('location_tier', 'Urban'))
-
-    # ── 5. Assemble response ──────────────────────────────────────────────────
-    response = {
-        "applicant_id" : applicant_id,
-        "name"         : name,
-
-        "traditional_model": {
-            "outcome"            : "ADMITTED" if outcome_a else "REJECTED",
-            "probability_score"  : round(prob, 3),
-            "threshold_required" : BASE_THRESHOLD,
-            "decision_reason"    : traditional_reason
-        },
-
-        "equidecide_model": {
-            "outcome"                   : "ADMITTED" if outcome_b else "REJECTED",
-            "probability_score"         : round(prob, 3),
-            "threshold_required"        : round(adj_threshold, 3),
-            "opportunity_deficit_score" : round(ods * 100),
-            "context_applied"           : reasons,
-            "explanation_text"          : explanation
-        },
-
-        "metrics": {
-            "equity_index"                  : equity,
-            "historical_group_approval_rate": hist_rate
-        }
-    }
-
-    return jsonify(response), 200
+    return app
 
 
-# ── Error handlers ─────────────────────────────────────────────────────────────
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({"error": "Endpoint not found"}), 404
-
-@app.errorhandler(500)
-def server_error(e):
-    return jsonify({"error": "Internal server error"}), 500
+app = create_app()
 
 
-# ── Run ────────────────────────────────────────────────────────────────────────
-if __name__ == '__main__':
-    print("─" * 45)
+if __name__ == "__main__":
+    print("-" * 45)
     print("  EquiDecide API starting...")
     print("  http://localhost:5000/api/health")
     print("  http://localhost:5000/api/evaluate")
-    print("─" * 45)
+    print("  http://localhost:5000/api/evaluate/dynamic")
+    print("-" * 45)
     app.run(debug=True, port=5000)

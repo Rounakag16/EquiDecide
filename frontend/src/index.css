@@ -4,17 +4,75 @@
   --font-sans: "Balsamiq Sans", "system-ui", sans-serif;
 }
 
+/* ── Custom Cursor ─────────────────────────────────────────── */
+* {
+  cursor: url('/cursor.svg') 4 4, auto;
+}
+
 body {
   @apply bg-[#fdfaf6] text-[#1c1917] font-sans antialiased;
   background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
   background-size: 32px 32px;
-  cursor: url('/cursor.svg') 4 4, auto;
 }
 
-a, button, [role="button"], input[type="submit"], input[type="checkbox"], select, .cursor-pointer {
+a, button, [role="button"], input[type="submit"], input[type="checkbox"], select, .cursor-pointer, label[for] {
   cursor: url('/cursor-pointer.svg') 4 4, pointer !important;
 }
 
+/* ── Click Ripple Animation ────────────────────────────────── */
+.click-ripple {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: clickRippleExpand 0.5s ease-out forwards;
+}
+
+@keyframes clickRippleExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+    box-shadow: 0 0 0 3px #f472b6, 0 0 0 6px rgba(244, 114, 182, 0.4);
+  }
+  50% {
+    width: 30px;
+    height: 30px;
+    opacity: 0.8;
+    box-shadow: 0 0 0 3px #0ea5e9, 0 0 0 8px rgba(14, 165, 233, 0.3);
+  }
+  100% {
+    width: 50px;
+    height: 50px;
+    opacity: 0;
+    box-shadow: 0 0 0 2px #fde047, 0 0 0 10px rgba(253, 224, 71, 0);
+  }
+}
+
+/* Ink splash variant — the small cross/star burst */
+.click-burst {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  animation: clickBurstAnim 0.4s ease-out forwards;
+}
+
+@keyframes clickBurstAnim {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.2) rotate(45deg);
+  }
+}
+
+/* ── Doodle Box Styles ─────────────────────────────────────── */
 /* Subtle hand-drawn border radiuses */
 .doodle-box {
   border: 2px solid #0f172a;
@@ -46,6 +104,7 @@ a, button, [role="button"], input[type="submit"], input[type="checkbox"], select
   background: white;
 }
 
+/* ── Toggle Switch ─────────────────────────────────────────── */
 /* Custom toggle with properly bound IDs relying on htmlFor */
 .toggle-checkbox:checked {
   @apply bg-[#0ea5e9] border-[#0f172a];
@@ -73,13 +132,14 @@ a, button, [role="button"], input[type="submit"], input[type="checkbox"], select
   box-shadow: 2px 2px 0px rgba(15, 23, 42, 0.8);
 }
 
+/* ── Layout Helpers ────────────────────────────────────────── */
 @media (max-width: 768px) {
   .split-screen-container {
     flex-direction: column !important;
   }
 }
 
-/* Animations for landing page redesign */
+/* ── Animations ────────────────────────────────────────────── */
 @keyframes marquee {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }

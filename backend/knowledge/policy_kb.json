@@ -1,0 +1,27 @@
+{
+  "version": "phase1-stub",
+  "description": "Structured policy snippets used to ground adaptive explanations.",
+  "sources": [
+    {
+      "id": "nfhs5-rural-internet",
+      "title": "NFHS-5 rural internet access baseline",
+      "domain": "internet_access",
+      "stat": "Rural internet penetration remains significantly below urban levels.",
+      "usage": "Used when low or intermittent internet reliability contributes to ODS."
+    },
+    {
+      "id": "nfhs5-first-gen-access",
+      "title": "First-generation education barriers",
+      "domain": "first_generation",
+      "stat": "First-generation learners often face reduced guidance and support networks.",
+      "usage": "Used for context rationale in dynamic explanations."
+    },
+    {
+      "id": "nfhs5-distance-burden",
+      "title": "Distance-to-institution burden",
+      "domain": "distance",
+      "stat": "Long travel distance increases educational friction and dropout risk.",
+      "usage": "Mapped to moderate/far distance adjustments."
+    }
+  ]
+}

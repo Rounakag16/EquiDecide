@@ -95,13 +95,22 @@ export interface ComparisonUIProps {
 export function ComparisonUI({ isLoading, hasEvaluated, applicantName, traditionalData, equidecideData }: ComparisonUIProps) {
   if (!hasEvaluated && !isLoading) return null;
 
+  const hasBothCards = traditionalData && equidecideData;
+  const cardCount = (traditionalData ? 1 : 0) + (equidecideData ? 1 : 0);
+
   return (
     <div className={`transition-all duration-700 ease-in-out h-full flex flex-col ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
       <div className="mb-8 bg-white px-6 py-3 border-4 border-slate-900 inline-block self-start shadow-[6px_6px_0px_#f43f5e] transform -rotate-1">
         <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Case: <span className="text-[#0ea5e9] underline decoration-wavy decoration-[#f43f5e]">{applicantName}</span></h2>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 flex-grow">
+      <div className={`grid gap-8 flex-grow ${
+        isLoading
+          ? 'grid-cols-1 xl:grid-cols-2'
+          : hasBothCards
+            ? 'grid-cols-1 xl:grid-cols-2'
+            : 'grid-cols-1 max-w-2xl'
+      }`}>
         {isLoading ? (
           <>
             <div className="bg-slate-200 border-8 border-slate-300 p-6 h-[500px] animate-pulse">
@@ -133,6 +142,13 @@ export function ComparisonUI({ isLoading, hasEvaluated, applicantName, tradition
           </>
         )}
       </div>
+
+      {/* Single-mode label when only one card */}
+      {!isLoading && cardCount === 1 && (
+        <div className="mt-4 inline-block bg-[#fde047] border-4 border-slate-900 px-4 py-2 font-black text-sm uppercase tracking-widest self-start transform rotate-1 shadow-[3px_3px_0px_#0f172a]">
+          {traditionalData ? '🤖 Static Model Only' : '✨ Dynamic Model Only'}
+        </div>
+      )}
 
       {!isLoading && equidecideData?.explanationText && (
         <div className="mt-8 bg-white p-6 md:p-8 border-8 border-slate-900 shadow-[8px_8px_0px_#0ea5e9]">

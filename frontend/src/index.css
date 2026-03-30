@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Balsamiq Sans", "system-ui", sans-serif;
+}
+
+body {
+  @apply bg-[#fdfaf6] text-[#1c1917] font-sans antialiased;
+  background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+  cursor: url('/cursor.svg') 4 4, auto;
+}
+
+a, button, [role="button"], input[type="submit"], input[type="checkbox"], select, .cursor-pointer {
+  cursor: url('/cursor-pointer.svg') 4 4, pointer !important;
+}
+
+/* Subtle hand-drawn border radiuses */
+.doodle-box {
+  border: 2px solid #0f172a;
+  border-radius: 8px 3px 10px 4px / 4px 10px 3px 8px;
+  box-shadow: 2px 2px 0px rgba(15, 23, 42, 0.8);
+}
+
+.doodle-box-sm {
+  border: 1.5px solid #0f172a;
+  border-radius: 6px 2px 8px 3px / 3px 8px 2px 6px;
+  box-shadow: 2px 2px 0px rgba(15, 23, 42, 0.6);
+}
+
+.doodle-button {
+  border: 2px solid #0f172a;
+  border-radius: 12px 4px 15px 6px / 6px 15px 4px 12px;
+  box-shadow: 3px 3px 0px rgba(15, 23, 42, 1);
+  transition: all 0.15s ease-in-out;
+}
+.doodle-button:active {
+  box-shadow: 1px 1px 0px rgba(15, 23, 42, 1);
+  transform: translate(2px, 2px);
+}
+
+.stamp {
+  border: 2px dashed currentColor;
+  border-radius: 8px;
+  padding: 4px 12px;
+  background: white;
+}
+
+/* Custom toggle with properly bound IDs relying on htmlFor */
+.toggle-checkbox:checked {
+  @apply bg-[#0ea5e9] border-[#0f172a];
+  transform: translateX(1.35rem);
+}
+.toggle-checkbox:checked + .toggle-label {
+  @apply bg-[#bae6fd];
+}
+.toggle-checkbox {
+  left: 0.15rem;
+  top: 0.15rem;
+  z-index: 10;
+  border-color: #0f172a;
+  transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55), background-color 0.2s;
+}
+.toggle-label {
+  display: block;
+  width: 3rem;
+  height: 1.5rem;
+  background-color: #f8fafc;
+  border: 2px solid #0f172a;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 2px 2px 0px rgba(15, 23, 42, 0.8);
+}
+
+@media (max-width: 768px) {
+  .split-screen-container {
+    flex-direction: column !important;
+  }
+}
+
+/* Animations for landing page redesign */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+  display: flex;
+  white-space: nowrap;
+}

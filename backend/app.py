@@ -11,6 +11,7 @@ from blueprints.static_eval import static_eval_bp
 from blueprints.context_infer import context_infer_bp
 from blueprints.feedback import feedback_bp
 from blueprints.analytics import analytics_bp
+from blueprints.chat_eval import chat_eval_bp
 from core.llm_explainer import get_provider_status
 from ods_engine import BASE_THRESHOLD
 
@@ -56,6 +57,7 @@ def create_app() -> Flask:
     app.register_blueprint(context_infer_bp)
     app.register_blueprint(feedback_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(chat_eval_bp)
 
     @app.route("/api/health", methods=["GET"])
     def health():

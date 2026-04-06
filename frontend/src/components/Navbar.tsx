@@ -7,6 +7,7 @@ interface NavbarProps {
 }
 
 const NAV_LINKS = [
+  { to: '/chat', label: 'AI Interview', style: 'bg-[#10b981] text-white shadow-[4px_4px_0px_#047857] -rotate-1' },
   { to: '/demo', label: 'Demo Mode', style: 'bg-white shadow-[4px_4px_0px_#0f172a] rotate-1' },
   { to: '/dynamic', label: 'Dynamic Eval', style: 'bg-[#bae6fd] shadow-[4px_4px_0px_#0ea5e9] -rotate-1' },
   { to: '/form', label: 'Static Eval', style: 'bg-[#fde047] shadow-[4px_4px_0px_#f472b6] rotate-2' },

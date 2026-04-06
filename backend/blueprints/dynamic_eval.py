@@ -32,6 +32,8 @@ def evaluate_dynamic():
     policy_refs = retrieve_policy_references(
         ods_reasons=scoring["reasons"], signals=scoring["signals"], policy_kb=policy_kb
     )
+    preferred_provider = data.get("preferred_provider", "auto")
+
     explanation_text, source = generate_explanation_text(
         applicant_name=scoring["name"],
         ods_score=scoring["ods"],
@@ -40,6 +42,7 @@ def evaluate_dynamic():
         adj_threshold=scoring["adj_threshold"],
         policy_refs=policy_refs,
         policy_kb=policy_kb,
+        preferred_provider=preferred_provider,
     )
 
     response = assemble_response(
@@ -78,6 +81,8 @@ def evaluate_dynamic_stream():
         ods_reasons=scoring["reasons"], signals=scoring["signals"], policy_kb=policy_kb
     )
 
+    preferred_provider = data.get("preferred_provider", "auto")
+
     explanation_text, source = generate_explanation_text(
         applicant_name=scoring["name"],
         ods_score=scoring["ods"],
@@ -86,6 +91,7 @@ def evaluate_dynamic_stream():
         adj_threshold=scoring["adj_threshold"],
         policy_refs=policy_refs,
         policy_kb=policy_kb,
+        preferred_provider=preferred_provider,
     )
 
     response_base = assemble_response(

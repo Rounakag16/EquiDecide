@@ -9,6 +9,7 @@ import { PolicyReferenceCard } from './PolicyReferenceCard';
 import { InferenceDebugPanel } from './InferenceDebugPanel';
 import { ArchetypeTag } from './ArchetypeTag';
 import { FeedbackWidget } from './FeedbackWidget';
+import { apiUrl } from '../lib/api';
 
 type UiOutcome = 'APPROVED' | 'REJECTED';
 
@@ -58,8 +59,15 @@ export function DynamicEvalPage() {
   const [inferenceData, setInferenceData] = useState<InferenceData | null>(null);
   const [archetype, setArchetype] = useState('');
   const [applicantId, setApplicantId] = useState('');
+  const [preferredProvider, setPreferredProvider] = useState<string>('auto');
 
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const providerOptions = [
+    { value: 'auto', label: '🤖 Auto', desc: 'Fastest available' },
+    { value: 'ollama_local', label: '🦙 Ollama Local', desc: 'Secure, offline' },
+    { value: 'gemini_api', label: '✨ Gemini Cloud', desc: 'High quality' },
+  ];
 
   const appendExplanationChunk = (chunk: string) => {
     setEquidecideData((prev) => {
@@ -88,7 +96,7 @@ export function DynamicEvalPage() {
     }, 200);
 
     try {
-      const res = await fetch('/api/evaluate/dynamic/stream', {
+      const res = await fetch(apiUrl('/api/evaluate/dynamic/stream'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,6 +104,7 @@ export function DynamicEvalPage() {
           name: payload.name || 'Applicant',
           standard_metrics: payload.standard_metrics,
           contextual_signals: payload.contextual_signals,
+          preferred_provider: preferredProvider,
         }),
       });
 
@@ -210,6 +219,38 @@ export function DynamicEvalPage() {
           {archetype && (
             <ArchetypeTag archetype={archetype} />
           )}
+        </div>
+
+        {/* Provider Selection */}
+        <div className="mb-8 p-5 bg-white border-8 border-slate-900 shadow-[8px_8px_0px_#f43f5e] max-w-3xl mx-auto">
+          <h2 className="font-black text-xl uppercase border-b-4 border-slate-900 pb-2 mb-4 flex items-center gap-2">
+            <span className="text-2xl">🧠</span> LLM Provider
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {providerOptions.map((opt) => (
+              <label
+                key={opt.value}
+                className={`flex items-start gap-3 cursor-pointer p-3 border-4 transition-all duration-200 ${
+                  preferredProvider === opt.value
+                    ? 'border-slate-900 bg-[#fde047] shadow-[4px_4px_0px_#0f172a] -translate-y-0.5'
+                    : 'border-slate-300 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  className="w-5 h-5 accent-slate-900 mt-0.5 shrink-0"
+                  name="providerPref"
+                  value={opt.value}
+                  checked={preferredProvider === opt.value}
+                  onChange={() => setPreferredProvider(opt.value)}
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="font-black text-sm uppercase leading-tight">{opt.label}</span>
+                  <span className="text-xs font-bold text-slate-500 leading-snug">{opt.desc}</span>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* Form Section — always full width at the top */}

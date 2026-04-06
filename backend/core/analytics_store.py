@@ -10,9 +10,14 @@ FEEDBACK_LOG_PATH = os.path.join(DATA_DIR, "feedback_log.jsonl")
 
 
 def _append_jsonl(path: str, record: Dict[str, Any]) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        # Serverless environments can have read-only filesystems.
+        # Logging should not break API behavior.
+        return
 
 
 def log_evaluation(*, mode: str, response_payload: Dict[str, Any]) -> None:

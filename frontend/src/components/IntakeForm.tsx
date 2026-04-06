@@ -89,7 +89,7 @@ export function IntakeForm({ onEvaluate, isLoading, compactMode }: IntakeFormPro
     }
   };
 
-  const inputClasses = "w-full bg-white text-slate-800 font-bold border-4 border-slate-900 px-4 py-3 focus:outline-none focus:bg-[#fde047] focus:shadow-[4px_4px_0px_#f472b6] transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+  const inputClasses = "w-full bg-white text-slate-800 font-bold border-4 border-slate-900 px-4 py-3 focus:outline-none focus:bg-[#fde047] brutal-focus disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div className={`transition-all duration-700 ease-in-out bg-white border-8 border-slate-900 overflow-hidden shadow-[8px_8px_0px_#0ea5e9] ${compactMode ? 'opacity-90 scale-[0.98]' : 'opacity-100'}`}>
@@ -254,7 +254,7 @@ export function IntakeForm({ onEvaluate, isLoading, compactMode }: IntakeFormPro
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full inline-flex items-center justify-center gap-4 text-2xl md:text-3xl font-black text-slate-900 bg-[#fde047] px-8 py-6 border-[6px] border-slate-900 shadow-[8px_8px_0px_#f472b6] hover:-translate-y-1 hover:shadow-[12px_12px_0px_#f472b6] active:translate-y-2 active:shadow-[4px_4px_0px_#f472b6] transition-all outline-none transform -rotate-1 hover:rotate-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center gap-4 text-2xl md:text-3xl font-black text-slate-900 bg-[#fde047] px-8 py-6 border-[6px] border-slate-900 shadow-[8px_8px_0px_#f472b6] hover:-translate-y-1 hover:shadow-[12px_12px_0px_#f472b6] btn-3d outline-none transform -rotate-1 hover:rotate-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>

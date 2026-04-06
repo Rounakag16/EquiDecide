@@ -1,5 +1,5 @@
 """
-EquiDecide – Opportunity Deficit Score (ODS) Engine
+EquiDecide  – Opportunity Deficit Score (ODS) Engine
 -----------------------------------------------------
 Calculates a score (0.0 – 1.0) representing how much
 structural disadvantage a student faces BEYOND their

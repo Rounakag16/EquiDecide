@@ -19,18 +19,7 @@ def validate_payload(data: Dict[str, Any]) -> Tuple[bool, str]:
     if not data:
         return False, "No JSON body received"
 
-    standard = data.get("standard_metrics", {})
-    academic_score = standard.get("academic_score_percentage")
-    monthly_income = standard.get("family_income_monthly_inr")
-
-    if academic_score is None or monthly_income is None:
-        return False, "Missing required fields: academic_score_percentage, family_income_monthly_inr"
-
-    signals = data.get("contextual_signals", {})
-    location = signals.get("location_tier")
-    if not location:
-        return False, "Missing required field: location_tier"
-
+    # We now allow missing fields and infer them dynamically
     return True, ""
 
 
@@ -42,12 +31,16 @@ def compute_scoring(data: Dict[str, Any], model: Any) -> Dict[str, Any]:
     raw_signals = data.get("contextual_signals", {})
     signals, inference_log, confidence_score = infer_context_signals(raw_signals)
 
+    aca_val = standard.get("academic_score_percentage")
+    inc_val = standard.get("family_income_monthly_inr")
+    
+    academic_score = float(aca_val) if aca_val is not None and str(aca_val).strip() != "" else 60.0
+    family_income = float(inc_val) if inc_val is not None and str(inc_val).strip() != "" else 35000.0
+
     features = pd.DataFrame(
         {
-            "academic_score_percentage": [
-                float(standard.get("academic_score_percentage"))
-            ],
-            "family_income_monthly_inr": [float(standard.get("family_income_monthly_inr"))],
+            "academic_score_percentage": [academic_score],
+            "family_income_monthly_inr": [family_income],
         }
     )
 

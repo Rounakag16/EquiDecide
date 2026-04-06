@@ -24,12 +24,15 @@ function Card({ type, data }: CardProps) {
     : "bg-[#fdfaf6] border-8 border-slate-900 -translate-y-2 relative shadow-[12px_12px_0px_#10b981]";
   
   const stampColor = isApproved ? "text-[#16a34a] border-[#16a34a]" : "text-[#ef4444] border-[#ef4444]";
-  const stampAngle = isApproved ? "rotate-[-12deg]" : "rotate-[15deg]";
+  const stampAngleVal = isApproved ? "-12deg" : "15deg";
 
   return (
     <div className={`p-6 flex flex-col h-full ${containerClasses} transition-all hover:translate-y-0`} style={!isTraditional ? { backgroundImage: 'radial-gradient(circle, #86efac 2px, transparent 2px)', backgroundSize: '30px 30px' } : {}}>
       {/* Stamp attached to the top right of the absolute main card border */}
-      <div className={`absolute -right-4 -top-6 md:-right-6 md:-top-8 text-3xl md:text-5xl font-black uppercase stamp ${stampColor} ${stampAngle} shadow-[4px_4px_0px_#000] bg-white px-6 py-2 border-[6px] z-50`}>
+      <div 
+        className={`absolute -right-4 -top-6 md:-right-6 md:-top-8 text-3xl md:text-5xl font-black uppercase stamp animate-stamp-in ${stampColor} shadow-[4px_4px_0px_#000] bg-white px-6 py-2 border-[6px] z-50`}
+        style={{ '--tw-rotate': stampAngleVal } as React.CSSProperties}
+      >
         {data.outcome}
       </div>
 
@@ -161,9 +164,9 @@ export function ComparisonUI({ isLoading, hasEvaluated, applicantName, tradition
                     Explainability Report
                     <span className="text-xs bg-[#fde047] px-2 py-1 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] transform -rotate-2">AI CONTEXT REASONING</span>
                   </h5>
-                  <p className="text-lg md:text-xl text-slate-700 font-bold leading-relaxed border-l-4 border-[#0ea5e9] pl-4 md:pl-6 py-2">
-                    {equidecideData.explanationText}
-                  </p>
+                  <div className="ruled-paper text-lg font-bold text-slate-800 marker-highlight">
+                    <span className="relative z-10">{equidecideData.explanationText}</span>
+                  </div>
                 </div>
             </div>
         </div>

@@ -10,8 +10,10 @@ import { Doodles } from './components/Doodles';
 import { IntroAnimation } from './components/IntroAnimation';
 import { DynamicEvalPage } from './components/DynamicEvalPage';
 import { DemoPage } from './components/DemoPage';
+import { ConversationalEvalPage } from './components/ConversationalEvalPage';
 import { FeedbackWidget } from './components/FeedbackWidget';
 import { ClickRipple } from './components/ClickRipple';
+import { apiUrl } from './lib/api';
 
 type UiOutcome = "APPROVED" | "REJECTED";
 
@@ -94,7 +96,7 @@ function EvaluationFlow() {
         },
       };
 
-      const res = await fetch('/api/evaluate', {
+      const res = await fetch(apiUrl('/api/evaluate'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,6 +215,7 @@ function App() {
         } />
         <Route path="/form" element={<EvaluationFlow />} />
         <Route path="/dynamic" element={<DynamicEvalPage />} />
+        <Route path="/chat" element={<ConversationalEvalPage />} />
         <Route path="/demo" element={<DemoPage />} />
       </Routes>
     </>

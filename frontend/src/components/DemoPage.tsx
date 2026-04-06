@@ -5,6 +5,7 @@ import { Footer } from './Footer';
 import { ComparisonUI } from './ComparisonUI';
 import { PolicyReferenceCard } from './PolicyReferenceCard';
 import { AnalyticsPanel } from './AnalyticsPanel';
+import { apiUrl } from '../lib/api';
 
 type UiOutcome = 'APPROVED' | 'REJECTED';
 
@@ -75,6 +76,13 @@ export function DemoPage() {
 
   const [selectedScenario, setSelectedScenario] = useState<string>('rural-firstgen');
   const [evalMode, setEvalMode] = useState<'static' | 'dynamic' | 'both'>('both');
+  const [preferredProvider, setPreferredProvider] = useState<string>('auto');
+
+  const providerOptions = [
+    { value: 'auto', label: '🤖 Auto', desc: 'Fastest available' },
+    { value: 'ollama_local', label: '🦙 Ollama Local', desc: 'Secure, offline' },
+    { value: 'gemini_api', label: '✨ Gemini Cloud', desc: 'High quality' },
+  ];
 
   const runCompare = async () => {
     const scenario = SCENARIOS.find(s => s.id === selectedScenario) || SCENARIOS[0];
@@ -93,7 +101,7 @@ export function DemoPage() {
       const fetches: Array<Promise<Response> | null> = [null, null];
 
       if (evalMode === 'static' || evalMode === 'both') {
-        fetches[0] = fetch('/api/evaluate', {
+        fetches[0] = fetch(apiUrl('/api/evaluate'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(scenario.payload),
@@ -101,10 +109,11 @@ export function DemoPage() {
       }
 
       if (evalMode === 'dynamic' || evalMode === 'both') {
-        fetches[1] = fetch('/api/evaluate/dynamic', {
+        const payloadWithProvider = { ...scenario.payload, preferred_provider: preferredProvider };
+        fetches[1] = fetch(apiUrl('/api/evaluate/dynamic'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(scenario.payload),
+          body: JSON.stringify(payloadWithProvider),
         });
       }
 
@@ -243,6 +252,38 @@ export function DemoPage() {
                   ))}
                 </div>
               </div>
+
+              {/* LLM Provider Selector (only relevant if dynamic is involved) */}
+              {(evalMode === 'dynamic' || evalMode === 'both') && (
+                <div className="space-y-2 pt-2">
+                  <label className="font-black text-slate-800 uppercase tracking-widest text-xs">LLM Provider</label>
+                  <div className="flex flex-col gap-2">
+                    {providerOptions.map((opt) => (
+                      <label
+                        key={opt.value}
+                        className={`flex items-start gap-3 cursor-pointer p-2.5 border-4 transition-all duration-200 ${
+                          preferredProvider === opt.value
+                            ? 'border-slate-900 bg-[#fde047] shadow-[4px_4px_0px_#0f172a] -translate-y-0.5'
+                            : 'border-slate-300 bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          className="w-4 h-4 accent-slate-900 mt-1 shrink-0"
+                          name="providerPrefDemo"
+                          value={opt.value}
+                          checked={preferredProvider === opt.value}
+                          onChange={() => setPreferredProvider(opt.value)}
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-black text-xs uppercase leading-tight">{opt.label}</span>
+                          <span className="text-[10px] font-bold text-slate-500 leading-snug">{opt.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Test Case (Scenario) Selector */}
               <div className="space-y-2 pt-2">

@@ -61,6 +61,7 @@ EquiDecide introduces a **transparent, auditable** correction layer:
 - **Node.js** (18+) with npm
 - **Python** (3.10+) with pip
 - **Gemini API Key** (get one from [Google AI Studio](https://aistudio.google.com/))
+- **Ollama** (Optional, for local LLM inference) — [Download Ollama](https://ollama.com/)
 
 ### 1. Clone the Repository
 
@@ -85,6 +86,10 @@ pip install -r requirements.txt
 # Configure environment
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
+
+# Optional: If using Ollama locally instead of Gemini
+ollama pull llama3.2
+ollama serve
 ```
 
 ### 3. Frontend Setup
@@ -180,7 +185,44 @@ WomenTechies/
 |---|---|---|
 | `GEMINI_API_KEY` | Google Gemini API key for LLM explanations | Required |
 | `GEMINI_MODEL` | Gemini model to use | `gemini-2.5-flash` |
+| `OLLAMA_MODEL` | Local Ollama model to use | `llama3.2` |
 | `FLASK_DEBUG` | Enable Flask debug mode | `true` |
+| `VITE_API_BASE_URL` | Frontend base URL for backend API (set in Vercel frontend project) | Empty (uses same-origin `/api`) |
+
+---
+
+## Deploy on Vercel (Frontend + Backend)
+
+Use **two Vercel projects** from this monorepo:
+- one project rooted at `backend`
+- one project rooted at `frontend`
+
+### 1) Deploy Backend (`backend`)
+
+1. In Vercel, create a new project and set **Root Directory** to `backend`.
+2. Framework can be auto-detected (Python).
+3. Set environment variables in Vercel Project Settings:
+   - `GEMINI_API_KEY` (required for Gemini explanations)
+   - `GEMINI_MODEL` (optional)
+   - `OLLAMA_MODEL` (optional; usually not used on Vercel)
+4. Deploy. Save the generated backend URL, for example:
+   - `https://equidecide-api.vercel.app`
+
+### 2) Deploy Frontend (`frontend`)
+
+1. Create another Vercel project and set **Root Directory** to `frontend`.
+2. Framework preset: Vite.
+3. Add environment variable:
+   - `VITE_API_BASE_URL=https://<your-backend-url>`
+4. Deploy.
+
+### 3) Verify
+
+Check these URLs after deploy:
+- Backend health: `https://<backend-url>/api/health`
+- Frontend app: `https://<frontend-url>/`
+
+If frontend API calls fail, confirm `VITE_API_BASE_URL` exactly matches your backend domain (including `https://`, no trailing slash needed).
 
 ---
 

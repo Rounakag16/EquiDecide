@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { apiUrl } from '../lib/api';
 
 type ContextualPayload = {
   name: string;
@@ -127,7 +128,7 @@ export function ContextualChatForm({
 
   const runInference = async () => {
     try {
-      const response = await fetch('/api/context/infer', {
+      const response = await fetch(apiUrl('/api/context/infer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

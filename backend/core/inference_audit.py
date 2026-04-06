@@ -20,16 +20,21 @@ def append_inference_audit(
     inference_log: List[Dict[str, Any]],
     confidence_score: float,
 ) -> None:
-    os.makedirs(os.path.dirname(AUDIT_LOG_PATH), exist_ok=True)
-    record = {
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "applicant_id": applicant_id,
-        "name": name,
-        "raw_signals": raw_signals,
-        "inferred_signals": inferred_signals,
-        "inference_log": inference_log,
-        "confidence_score": confidence_score,
-    }
-    with open(AUDIT_LOG_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    try:
+        os.makedirs(os.path.dirname(AUDIT_LOG_PATH), exist_ok=True)
+        record = {
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "applicant_id": applicant_id,
+            "name": name,
+            "raw_signals": raw_signals,
+            "inferred_signals": inferred_signals,
+            "inference_log": inference_log,
+            "confidence_score": confidence_score,
+        }
+        with open(AUDIT_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        # Serverless environments can have read-only filesystems.
+        # Audit logging should never block inference responses.
+        return
 

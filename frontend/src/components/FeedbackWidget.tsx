@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiUrl } from '../lib/api';
 
 export function FeedbackWidget({ applicantId }: { applicantId: string }) {
   const [rating, setRating] = useState<'up' | 'down' | null>(null);
@@ -9,7 +10,7 @@ export function FeedbackWidget({ applicantId }: { applicantId: string }) {
     setRating(r);
     setStatus('sending');
     try {
-      const res = await fetch('/api/feedback', {
+      const res = await fetch(apiUrl('/api/feedback'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicant_id: applicantId, rating: r, text }),

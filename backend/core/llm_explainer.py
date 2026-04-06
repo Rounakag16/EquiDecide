@@ -147,10 +147,12 @@ def generate_explanation_text(
     adj_threshold: float,
     policy_refs: List[Dict[str, str]],
     policy_kb: Dict[str, Any],
+    preferred_provider: str = "auto",
 ) -> Tuple[str, str]:
     """
     Returns (explanation_text, source_label).
     source_label is one of: 'ollama_local', 'gemini_api', 'kb_fallback'.
+    preferred_provider can be 'auto', 'ollama_local', or 'gemini_api'.
     """
     ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2")
     gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -179,74 +181,80 @@ def generate_explanation_text(
     )
 
     # Provider 1 (free/local): Ollama
-    try:
-        prompt = f"{system_prompt}\n\n{user_prompt}"
-        response = requests.post(
-            "http://127.0.0.1:11434/api/generate",
-            json={
-                "model": ollama_model,
-                "prompt": prompt,
-                "stream": False,
-                "options": {"temperature": 0.2},
-            },
-            timeout=20,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        explanation = str(payload.get("response", "")).strip()
+    if preferred_provider in ("auto", "ollama_local"):
+        try:
+            prompt = f"{system_prompt}\n\n{user_prompt}"
+            response = requests.post(
+                "http://127.0.0.1:11434/api/generate",
+                json={
+                    "model": ollama_model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.2},
+                },
+                timeout=120,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            explanation = str(payload.get("response", "")).strip()
 
-        if not explanation:
-            raise RuntimeError("Ollama returned empty explanation")
+            if not explanation:
+                raise RuntimeError("Ollama returned empty explanation")
 
-        return explanation, "ollama_local"
+            return explanation, "ollama_local"
 
-    except Exception:
-        pass
+        except Exception as e:
+            if preferred_provider == "ollama_local":
+                print(f"Ollama requested but failed: {e}")
+            pass
 
     # Provider 2 (free tier cloud): Gemini API
-    try:
-        if not gemini_api_key:
-            raise RuntimeError("Missing GEMINI_API_KEY")
+    if preferred_provider in ("auto", "gemini_api"):
+        try:
+            if not gemini_api_key:
+                raise RuntimeError("Missing GEMINI_API_KEY")
 
-        gemini_url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{gemini_model}:generateContent?key={gemini_api_key}"
-        )
-        gemini_payload = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [
-                        {
-                            "text": f"{system_prompt}\n\n{user_prompt}"
-                        }
-                    ],
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 650,
-            },
-        }
-        response = requests.post(gemini_url, json=gemini_payload, timeout=25)
-        response.raise_for_status()
-        data = response.json()
-        candidates = data.get("candidates", [])
-        text = ""
-        if candidates:
-            parts = (
-                candidates[0]
-                .get("content", {})
-                .get("parts", [])
+            gemini_url = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{gemini_model}:generateContent?key={gemini_api_key}"
             )
-            text = "".join(str(p.get("text", "")) for p in parts).strip()
+            gemini_payload = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {
+                                "text": f"{system_prompt}\n\n{user_prompt}"
+                            }
+                        ],
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 650,
+                },
+            }
+            response = requests.post(gemini_url, json=gemini_payload, timeout=25)
+            response.raise_for_status()
+            data = response.json()
+            candidates = data.get("candidates", [])
+            text = ""
+            if candidates:
+                parts = (
+                    candidates[0]
+                    .get("content", {})
+                    .get("parts", [])
+                )
+                text = "".join(str(p.get("text", "")) for p in parts).strip()
 
-        if not text:
-            raise RuntimeError("Gemini returned empty explanation")
+            if not text:
+                raise RuntimeError("Gemini returned empty explanation")
 
-        return text, "gemini_api"
-    except Exception:
-        pass
+            return text, "gemini_api"
+        except Exception as e:
+            if preferred_provider == "gemini_api":
+                print(f"Gemini requested but failed: {e}")
+            pass
 
     fallback = build_fallback_explanation(
         applicant_name=applicant_name,
@@ -257,4 +265,120 @@ def generate_explanation_text(
         policy_refs=policy_refs,
     )
     return fallback, "kb_fallback"
+
+
+def generate_interview_chat(
+    messages: List[Dict[str, str]], preferred_provider: str = "auto"
+) -> Dict[str, Any]:
+    """
+    Takes a conversation history (list of {"role": "user"|"assistant", "content": "..."})
+    and returns a parsed JSON dict from the LLM with instructions to either continue
+    or complete the evaluation.
+    """
+    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2")
+    gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+    system_prompt = (
+        "You are an empathetic, conversational AI interviewer for the EquiDecide educational evaluation platform. "
+        "Your goal is to gather a few key details about the applicant to evaluate them fairly. "
+        "You need to know:\n"
+        "1. Their Name\n"
+        "2. Academic Score (percentage 0-100)\n"
+        "3. Family Income (monthly in INR)\n"
+        "4. Location (Are they from an Urban, Semi-Urban, or Rural area?)\n"
+        "5. Distance from nearest educational institution (in km)\n"
+        "6. Internet reliability (High, Medium, or Low)\n"
+        "7. Are they a first-generation student? (True/False)\n\n"
+        "Ask friendly questions. Do NOT ask for everything at once. "
+        "If the user tells you to just give the results or forces an answer, output status 'complete', leave missing fields as null, "
+        "and the system will infer the missing fields automatically using traditional defaults.\n"
+        "When you have all the fields OR the user demands results, set status to 'complete'.\n\n"
+        "IMPORTANT: You MUST ONLY output valid raw JSON. No markdown code blocks, no text outside JSON.\n"
+        "JSON SCHEMA:\n"
+        "{\n"
+        '  "status": "continue" or "complete",\n'
+        '  "reply": "Your conversational reply to the user...",\n'
+        '  "extracted_data": {\n'
+        '     "name": null,\n'
+        '     "standard_metrics": {"academic_score_percentage": null, "family_income_monthly_inr": null},\n'
+        '     "contextual_signals": {\n'
+        '        "location_tier": null,\n'
+        '        "distance_from_institution_km": null,\n'
+        '        "internet_reliability": null,\n'
+        '        "first_generation": null\n'
+        "     }\n"
+        "  }\n"
+        "}"
+    )
+
+    if preferred_provider in ("auto", "ollama_local"):
+        try:
+            # For Ollama, we convert the messages into a single prompt string since 
+            # some basic models handle raw text better, or we can use the /api/chat endpoint.
+            # We'll use the /api/chat endpoint which takes `messages`.
+            ollama_messages = [{"role": "system", "content": system_prompt}]
+            for m in messages:
+                ollama_messages.append({"role": m.get("role", "user"), "content": m.get("content", "")})
+            
+            res = requests.post(
+                "http://127.0.0.1:11434/api/chat",
+                json={
+                    "model": ollama_model,
+                    "messages": ollama_messages,
+                    "stream": False,
+                    "format": "json",
+                    "options": {"temperature": 0.1},
+                },
+                timeout=120,
+            )
+            res.raise_for_status()
+            text = res.json().get("message", {}).get("content", "")
+            if text:
+                return json.loads(text)
+        except Exception as e:
+            if preferred_provider == "ollama_local":
+                print(f"Ollama chat failed: {e}")
+            pass
+
+    if preferred_provider in ("auto", "gemini_api") and gemini_api_key:
+        try:
+            gemini_url = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{gemini_model}:generateContent?key={gemini_api_key}"
+            )
+            contents = [{"role": "user", "parts": [{"text": system_prompt}]}]
+            for m in messages:
+                role = "user" if m.get("role") == "user" else "model"
+                contents.append({"role": role, "parts": [{"text": m.get("content", "")}]})
+            
+            gemini_payload = {
+                "contents": contents,
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "responseMimeType": "application/json",
+                },
+            }
+            res = requests.post(gemini_url, json=gemini_payload, timeout=25)
+            res.raise_for_status()
+            candidates = res.json().get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                text = "".join(str(p.get("text", "")) for p in parts).strip()
+                return json.loads(text)
+        except Exception as e:
+            if preferred_provider == "gemini_api":
+                print(f"Gemini chat failed: {e}")
+            pass
+
+    # Fallback if both fail
+    return {
+        "status": "complete",
+        "reply": "I'm having trouble connecting to my AI backend. I will stop the interview and process whatever information you've already given me.",
+        "extracted_data": {
+            "name": "Applicant",
+            "standard_metrics": {"academic_score_percentage": 50.0, "family_income_monthly_inr": None},
+            "contextual_signals": {}
+        }
+    }
 

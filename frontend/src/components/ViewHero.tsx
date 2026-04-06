@@ -1,7 +1,19 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Target, Users, Scale, ArrowRight, Zap } from 'lucide-react';
 
 export function ViewHero() {
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 40;
+            const y = (e.clientY / window.innerHeight - 0.5) * 40;
+            setMousePos({ x, y });
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
     return (
         <div className="w-full bg-[#fdfaf6] overflow-hidden">
             
@@ -21,10 +33,16 @@ export function ViewHero() {
 
                 {/* Floating Elements (Section-Level Positioning for Safety) */}
                 {/* Desktop Elements */}
-                <div className="hidden md:block absolute top-[25%] left-[2%] lg:left-[10%] xl:left-[15%] px-4 py-2 border-4 border-slate-900 text-lg leading-snug font-black rotate-12 bg-[#fbcfe8] text-slate-900 shadow-[4px_4px_0px_#0f172a] animate-[wiggle_4s_ease-in-out_infinite] z-30 whitespace-nowrap hover:scale-110 transition-transform">
+                <div 
+                    className="hidden md:block absolute top-[25%] left-[2%] lg:left-[10%] xl:left-[15%] px-4 py-2 border-4 border-slate-900 text-lg leading-snug font-black bg-[#fbcfe8] text-slate-900 shadow-[4px_4px_0px_#0f172a] z-30 whitespace-nowrap transition-transform duration-200 hover:scale-110 hover:shadow-[8px_8px_0px_#0ea5e9] cursor-pointer"
+                    style={{ transform: `translate(${-mousePos.x}px, ${-mousePos.y}px) rotate(12deg)` }}
+                >
                     Tier-3 Region
                 </div>
-                <div className="hidden md:block absolute top-[40%] text-right right-[2%] lg:right-[10%] xl:right-[15%] px-4 py-2 border-4 border-slate-900 text-lg leading-snug font-black -rotate-12 bg-[#bae6fd] text-slate-900 shadow-[4px_4px_0px_#0f172a] animate-[wiggle_5s_ease-in-out_infinite_reverse] z-30 whitespace-nowrap hover:scale-110 transition-transform">
+                <div 
+                    className="hidden md:block absolute top-[40%] text-right right-[2%] lg:right-[10%] xl:right-[15%] px-4 py-2 border-4 border-slate-900 text-lg leading-snug font-black bg-[#bae6fd] text-slate-900 shadow-[4px_4px_0px_#0f172a] z-30 whitespace-nowrap transition-transform duration-200 hover:scale-110 hover:shadow-[8px_8px_0px_#f472b6] cursor-pointer"
+                    style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px) rotate(-12deg)` }}
+                >
                     First-Gen Student
                 </div>
 
@@ -60,22 +78,30 @@ export function ViewHero() {
                         Strict algorithmic thresholds punishes resilience. EquiDecide prevents this algorithmic bias using <strong className="bg-[#fefce8] px-2 border-b-4 border-[#fde047] inline-block">opportunity deficit scores</strong> to understand the true context behind the data.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row items-center gap-5">
+                    <div className="flex flex-col sm:flex-row items-center gap-5 flex-wrap justify-center mt-6">
                         <Link
                             to="/form"
-                            className="group relative inline-flex items-center justify-center gap-3 text-2xl font-black text-white bg-[#0f172a] px-12 py-6 rounded-2xl border-4 border-[#0f172a] hover:bg-[#1e293b] active:scale-95 transition-all outline-none"
+                            className="group relative inline-flex items-center justify-center gap-3 text-xl md:text-2xl font-black text-white bg-[#0f172a] px-8 md:px-12 py-4 md:py-6 rounded-2xl border-4 border-[#0f172a] hover:bg-[#1e293b] btn-3d outline-none"
                         >
                             <div className="absolute inset-0 bg-[#f472b6] rounded-xl transform translate-x-3 translate-y-3 -z-10 group-hover:translate-x-4 group-hover:translate-y-4 group-active:translate-x-1 group-active:translate-y-1 transition-transform border-4 border-[#0f172a]"></div>
                             <span>Static Form Demo</span>
-                            <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
+                            <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
                         </Link>
                         <Link
                             to="/dynamic"
-                            className="group relative inline-flex items-center justify-center gap-3 text-2xl font-black text-white bg-[#0f172a] px-12 py-6 rounded-2xl border-4 border-[#0f172a] hover:bg-[#1e293b] active:scale-95 transition-all outline-none"
+                            className="group relative inline-flex items-center justify-center gap-3 text-xl md:text-2xl font-black text-white bg-[#0f172a] px-8 md:px-12 py-4 md:py-6 rounded-2xl border-4 border-[#0f172a] hover:bg-[#1e293b] btn-3d outline-none"
                         >
                             <div className="absolute inset-0 bg-[#0ea5e9] rounded-xl transform translate-x-3 translate-y-3 -z-10 group-hover:translate-x-4 group-hover:translate-y-4 group-active:translate-x-1 group-active:translate-y-1 transition-transform border-4 border-[#0f172a]"></div>
                             <span>Dynamic Beta Demo</span>
-                            <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
+                            <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
+                        </Link>
+                        <Link
+                            to="/chat"
+                            className="group relative inline-flex items-center justify-center gap-3 text-xl md:text-2xl font-black text-white bg-[#0f172a] px-8 md:px-12 py-4 md:py-6 rounded-2xl border-4 border-[#0f172a] hover:bg-[#1e293b] active:scale-95 transition-all outline-none"
+                        >
+                            <div className="absolute inset-0 bg-[#10b981] rounded-xl transform translate-x-3 translate-y-3 -z-10 group-hover:translate-x-4 group-hover:translate-y-4 group-active:translate-x-1 group-active:translate-y-1 transition-transform border-4 border-[#0f172a]"></div>
+                            <span>AI Chat Interview</span>
+                            <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
                         </Link>
                     </div>
                 </div>
@@ -282,7 +308,7 @@ export function ViewHero() {
                     
                     <Link
                         to="/form"
-                        className="group relative inline-flex items-center justify-center gap-4 text-2xl md:text-4xl font-black text-slate-900 bg-white px-12 md:px-20 py-8 rounded-[2rem] border-8 border-slate-900 hover:bg-[#f8fafc] active:scale-95 transition-all outline-none"
+                        className="group relative inline-flex items-center justify-center gap-4 text-2xl md:text-4xl font-black text-slate-900 bg-white px-12 md:px-20 py-8 rounded-[2rem] border-8 border-slate-900 hover:bg-[#f8fafc] btn-3d outline-none"
                     >
                         <div className="absolute inset-0 bg-[#f472b6] rounded-[1.5rem] transform translate-x-3 translate-y-3 -z-10 group-hover:translate-x-5 group-hover:translate-y-5 border-4 border-slate-900 transition-all"></div>
                         <div className="absolute inset-0 bg-[#0ea5e9] rounded-[1.5rem] transform translate-x-6 translate-y-6 -z-20 group-hover:translate-x-8 group-hover:translate-y-8 border-4 border-slate-900 transition-all"></div>

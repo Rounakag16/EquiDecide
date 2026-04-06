@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiUrl } from '../lib/api';
 
 type Analytics = {
   totals: {
@@ -23,7 +24,7 @@ export function AnalyticsPanel() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/analytics');
+        const res = await fetch(apiUrl('/api/analytics'));
         if (!res.ok) return;
         const json = await res.json();
         setData(json);

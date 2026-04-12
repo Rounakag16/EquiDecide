@@ -257,7 +257,7 @@ The UI follows a **"Doodly Brutalism"** aesthetic:
 
 ## 👩‍💻 Team
 
-Built by **Team GDG VIT Vellore** for the Women Techies Hackathon 2026.
+Built by **Team Coding Divas** for the Women Techies Hackathon 2026.
 
 ---
 
